@@ -47,7 +47,6 @@ if args.cloud:
 	from wordcloud import WordCloud
 	import matplotlib.pyplot as plt
 	wordcloud = WordCloud(width=1920,height=1080, max_words=nmax,relative_scaling=1,normalize_plurals=False).generate_from_frequencies(dict(twords))
-
 	plt.imshow(wordcloud, interpolation='bilinear')
 	plt.axis("off")
 	plt.show()
