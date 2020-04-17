@@ -3,16 +3,15 @@ from glob import glob
 import re
 import sys
 import pandas as pd
-import plotly
+import plotly.graph_objects as go
 regex = re.compile('[^a-zA-Z]')
-print(sys.argv[-1])
 channels=glob((str(sys.argv[-1])+"messages/*/messages.csv"))
 messages=[]
+uwords={}
+twords=[]
 for i in channels:
 	f=pd.read_csv(str(i), usecols=[2])
 	messages.append((f.get_values()))
-uwords={}
-twords=[]
 for channel in messages:
 	for message in channel:
 		for word in str(message[0]).split():
@@ -22,6 +21,25 @@ for channel in messages:
 			else:
 				uwords[cleanedword]+=1
 for tple in uwords:
-	twords.append( (tple, uwords[tple]) )
-for tple in sorted(twords, key=lambda tup: tup[1])[-100:]:
-	print("Word:", "\""+str(tple[0])+"\",", "Instances:", str(tple[1]))
+	twords.append((tple, uwords[tple]))
+twords=sorted(twords, key=lambda x: x[1])
+x = [i[0] for i in twords[-20:]]
+y = [i[1] for i in twords[-20:]]
+
+np = go.Bar(
+    x=x,
+    y=y,
+    )
+layout = go.Layout(
+    title='Word vs. Count',
+    xaxis=dict(
+        title='Word'
+    ),
+    yaxis=dict(
+        title='Count'
+    ),
+    hovermode='closest',
+    #showlegend=True
+)
+figure = go.Figure(np, layout=layout)
+figure.show()
