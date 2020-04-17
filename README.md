@@ -6,4 +6,4 @@ This program takes Discord's data dump and visualizes it
 chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/
 ```
-This is a test
+Please use the -h flags for additional graphing modes and information
