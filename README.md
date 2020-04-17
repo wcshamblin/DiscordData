@@ -12,3 +12,7 @@ chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/
 ```
 Please use the -h flags for additional graphing modes and information
+
+
+## TODO:
+Implement datetime slider for bar chart, and wordcloud as well, if I'm feeling ambitious
