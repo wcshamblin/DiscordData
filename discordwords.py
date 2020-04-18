@@ -64,7 +64,7 @@ if args.cloud:
 	import matplotlib.pyplot as plt
 	print(str(str(len(twords))+' words selected over '+str(len(servers))+' servers\n'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'\n'+
-		   'Words presented: '+str(nmax)))
+		   'Unique words presented: '+str(nmax)))
 	wordcloud = WordCloud(width=1920,height=1080, max_words=nmax,relative_scaling=1,normalize_plurals=False).generate_from_frequencies(dict(twords))
 	plt.imshow(wordcloud, interpolation='bilinear')
 	plt.axis("off")
@@ -119,7 +119,7 @@ if args.time:
 if not args.cloud and not args.time:
 	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br>'+
-		   'Words presented: '+str(nmax))
+		   'Unique words presented: '+str(nmax))
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
 	pl = go.Bar(
