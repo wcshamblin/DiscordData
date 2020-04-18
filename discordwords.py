@@ -15,12 +15,12 @@ ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-
  
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
-servers=eval(open(args.path+"servers/index.json").read()).values()
 
 channels=glob((args.path+"messages/*/messages.csv"))
 if len(channels)<1:
-	print("Folder is not readable")
+	print(args.path+"messages/ is not readable")
 	exit()
+servers=eval(open(args.path+"servers/index.json").read()).values()
 messages=[]
 uwords={}
 twords=[]
@@ -34,7 +34,6 @@ if args.start!=None:
 	sdate=args.start[0]
 if args.end!=None:
 	edate=args.end[0]
-print(sdate)
 acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
 for channel in acsv.to_numpy():
