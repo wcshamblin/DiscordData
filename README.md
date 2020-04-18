@@ -11,10 +11,27 @@ Extract the zip into a folder.
 chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/
 ```
-Please use the -h flags for additional graphing modes and information
+## Example commands
 
+#### Plot a bar chart
+```bash
+./discordwords.py /path/to/discord/data/ -b
+```
 
+#### Plot a word cloud
+```bash
+./discordwords.py /path/to/discord/data/ -c
+```
 
+#### Plot a time series
+```bash
+./discordwords.py /path/to/discord/data/ -t
+```
+
+#### Plot a timeseries of messages between Jan 01 2018 and Jan 01 2019
+```bash
+./discordwords.py /path/to/discord/data/ -t -s 2018-01-01 -e 2019-01-01
+```
 
 ## Example output
 Word Cloud:
