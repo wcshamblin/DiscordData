@@ -18,7 +18,15 @@ Please use the -h flags for additional graphing modes and information
 
 ## Example output
 Word Cloud:
-![Word Cloud Output](https://drive.google.com/uc?export=download&id=1CsPUijeDBWQ7y6oIEH_QBxdUrczqffhI)
+
+![Word Cloud Output](./screenshots/wordcloud.png)
+
+Bar Chart:
+![Bar Chart Output](./screenshots/barchart.png)
+
+Time Series:
+![Time Series Output](./screenshots/timeseries.png)
+
 
 
 ## TODO:
