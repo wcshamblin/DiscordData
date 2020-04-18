@@ -10,8 +10,13 @@ ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data 
 ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud (default)")
 ps.add_argument("-b", "--bar", action="store_true", help="Present data as bar chart")
 ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 40, WordCloud defaults to 512")
+ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
+ps.add_argument("-t", "--stop", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
+ 
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
+servers=eval(open(args.path+"servers/index.json").read()).values()
+
 channels=glob((args.path+"messages/*/messages.csv"))
 if len(channels)<1:
 	print("Folder is not readable")
@@ -21,8 +26,11 @@ uwords={}
 twords=[]
 acsv = pd.concat([pd.read_csv(str(i), usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
-sdate="2019-01-01"
-edate="2019-04-01"
+print(min(acsv['Timestamp']))
+print(min(acsv['Timestamp']))
+
+sdate="2019-01-01" # if not defined, default to earliest
+edate="2019-04-01"                             #latest
 acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
 for channel in acsv.to_numpy():
@@ -47,14 +55,19 @@ else:
 		nmax=40
 
 if args.bar:
+	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
+		   'Date range: '+sdate+' - '+edate+'<br>'+
+		   'Words presented: '+str(nmax))
+
 	x = [i[0] for i in twords[-nmax:]]
+	x=['<space>' if i=='' else i for i in x]
 	y = [i[1] for i in twords[-nmax:]]
 	np = go.Bar(
 	    x=x,
 	    y=y,
 	    )
 	layout = go.Layout(
-	    title='Word vs. Count',
+	    title=tt,
 	    xaxis=dict(
 	        title='Word'
 	    ),
