@@ -47,4 +47,5 @@ Time Series:
 
 
 ## TODO:
-Implement datetime slider for bar chart, and wordcloud as well, if I'm feeling ambitious
+~~Implement datetime selector~~
+Implement some sort of server-specific view for messages
