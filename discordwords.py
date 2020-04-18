@@ -14,28 +14,31 @@ args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
 channels=glob((args.path+"messages/*/messages.csv"))
 if len(channels)<1:
-	print("Folder is empty/not found")
+	print("Folder is not readable")
 	exit()
 messages=[]
 uwords={}
 twords=[]
-for i in channels:
-	f=pd.read_csv(str(i), usecols=[2])
-	messages.append((f.get_values()))
-for channel in messages:
-	for message in channel:
-		for word in str(message[0]).split():
-			cleanedword=regex.sub('', word).strip().lower()
-			if cleanedword not in uwords:
-				uwords[cleanedword]=1
-			else:
-				uwords[cleanedword]+=1
+acsv = pd.concat([pd.read_csv(str(i), usecols=[1, 2]) for i in channels])
+acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
+sdate="2019-01-01"
+edate="2019-04-01"
+acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
+
+for channel in acsv.to_numpy():
+	for word in str(channel[1]).split():
+		cleanedword=regex.sub('', word).strip().lower()
+		if cleanedword not in uwords:
+			uwords[cleanedword]=1
+		else:
+			uwords[cleanedword]+=1
 for tple in uwords:
 	twords.append((tple, uwords[tple]))
 twords=sorted(twords, key=lambda x: x[1])
 
 if args.num is not None:
-	if args.num[0]>len(twords) or args.n[0]==-1:
+	nmax=args.num[0]
+	if args.num[0]>len(twords) or args.num[0]==-1:
 		nmax=len(twords)
 else:
 	if args.cloud:
