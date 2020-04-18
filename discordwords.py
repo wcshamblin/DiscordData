@@ -74,10 +74,18 @@ if args.cloud:
 if args.time:
 	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
 	   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
-	acsv=acsv.groupby(acsv['Timestamp'].dt.date).count()
+	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()      #remove time, keep date
+	del acsv['Contents']                                                      #remove contents of message
+	acsv['Count'] = acsv.groupby('Timestamp')['Timestamp'].transform('count') #create count col
+	acsv=acsv.drop_duplicates(keep="first").sort_values('Timestamp')          #drop duplicate dates
 
+	print(acsv)
+	dr=pd.date_range(min(acsv['Timestamp']), max(acsv['Timestamp']))
+	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
+	acsv.set_index('Timestamp', inplace=True)
+	acsv=acsv.resample('D').mean().reset_index().fillna(0)
 	fig = go.Figure()
-	fig.add_trace(go.Scatter(x=list(acsv.Timestamp), y=list(acsv.Contents)))
+	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count'])))
 	fig.update_layout(
 	    title_text="Time series with range slider and selectors"
 	)
@@ -107,11 +115,7 @@ if args.time:
 	        ),
 	        type="date"
 	    )
-	)
-
-	print(acsv['Timestamp'])
-	print(acsv['Contents'])
-	
+	)	
 
 	fig.show()
 
