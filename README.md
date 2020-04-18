@@ -1,5 +1,5 @@
 # DiscordData.py
-This program takes Discord's data dump and visualizes it in either a wordcloud or a bar chart
+This program takes Discord's data dump and visualizes it using plotly and python3
 
 ## Obtaining data
 User Settings -> Privacy & Safety -> Request all of my Data
