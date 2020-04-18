@@ -7,12 +7,13 @@ import plotly.graph_objects as go
 import argparse
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
-ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud (default)")
+ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
 ps.add_argument("-b", "--bar", action="store_true", help="Present data as bar chart")
+ps.add_argument("-t", "--time", action="store_true", help="Present data as a timeseries")
 ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 40, WordCloud defaults to 512")
 ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
 ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
- 
+
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
 
@@ -58,7 +59,6 @@ else:
 if nmax>len(twords) or nmax==-1:
 	nmax=len(twords)
 
-
 if args.cloud:
 	from wordcloud import WordCloud
 	import matplotlib.pyplot as plt
@@ -69,14 +69,60 @@ if args.cloud:
 	plt.imshow(wordcloud, interpolation='bilinear')
 	plt.axis("off")
 	plt.show()
-else:
+
+
+if args.time:
+	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
+	   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
+	acsv=acsv.groupby(acsv['Timestamp'].dt.date).count()
+
+	fig = go.Figure()
+	fig.add_trace(go.Scatter(x=list(acsv.Timestamp), y=list(acsv.Contents)))
+	fig.update_layout(
+	    title_text="Time series with range slider and selectors"
+	)
+
+	# Add range slider
+	fig.update_layout(
+	    xaxis=dict(
+	        rangeselector=dict(
+	            buttons=list([
+	                dict(count=1,
+	                     label="1d",
+	                     step="day",
+	                     stepmode="backward"),
+	                dict(count=1,
+	                     label="1m",
+	                     step="month",
+	                     stepmode="backward"),
+	                dict(count=1,
+	                     label="1y",
+	                     step="year",
+	                     stepmode="backward"),
+	                dict(step="all")
+	            ])
+	        ),
+	        rangeslider=dict(
+	            visible=True
+	        ),
+	        type="date"
+	    )
+	)
+
+	print(acsv['Timestamp'])
+	print(acsv['Contents'])
+	
+
+	fig.show()
+
+
+if args.bar:
 	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br>'+
 		   'Words presented: '+str(nmax))
-
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
-	np = go.Bar(
+	pl = go.Bar(
 	    x=x,
 	    y=y,
 	    )
@@ -91,5 +137,5 @@ else:
 	    hovermode='closest',
 	    #showlegend=True
 	)
-	figure = go.Figure(np, layout=layout)
+	figure = go.Figure(pl, layout=layout)
 	figure.show()
