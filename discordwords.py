@@ -51,17 +51,21 @@ twords=sorted(twords, key=lambda x: x[1])
 
 if args.num is not None:
 	nmax=args.num[0]
-	if args.num[0]>len(twords) or args.num[0]==-1:
-		nmax=len(twords)
 else:
 	if args.cloud:
 		nmax=512
 	else:
 		nmax=40
+if nmax>len(twords) or nmax==-1:
+	nmax=len(twords)
+
 
 if args.cloud:
 	from wordcloud import WordCloud
 	import matplotlib.pyplot as plt
+	print(str(str(len(twords))+' words selected over '+str(len(servers))+' servers\n'+
+		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'\n'+
+		   'Words presented: '+str(nmax)))
 	wordcloud = WordCloud(width=1920,height=1080, max_words=nmax,relative_scaling=1,normalize_plurals=False).generate_from_frequencies(dict(twords))
 	plt.imshow(wordcloud, interpolation='bilinear')
 	plt.axis("off")
