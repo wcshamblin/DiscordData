@@ -62,16 +62,15 @@ if nmax>len(twords) or nmax==-1:
 if args.cloud:
 	from wordcloud import WordCloud
 	import matplotlib.pyplot as plt
-	print(str(str(len(twords))+' words selected over '+str(len(servers))+' servers\n'+
-		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'\n'+
-		   'Unique words presented: '+str(nmax)))
+	print(str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
+		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'\n'))
 	wordcloud = WordCloud(width=1920,height=1080, max_words=nmax,relative_scaling=1,normalize_plurals=False).generate_from_frequencies(dict(twords))
 	plt.imshow(wordcloud, interpolation='bilinear')
 	plt.axis("off")
 	plt.show()
 
 if args.time:
-	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers'+
+	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
 	   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br> ')
 	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()      #remove time, keep date
 	del acsv['Contents']                                                      #remove contents of message
@@ -117,7 +116,7 @@ if args.time:
 
 
 if not args.cloud and not args.time:
-	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
+	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br>'+
 		   'Unique words presented: '+str(nmax))
 	x = [i[0] for i in twords[-nmax:]]
