@@ -26,20 +26,25 @@ uwords={}
 twords=[]
 acsv = pd.concat([pd.read_csv(str(i), usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
-print(min(acsv['Timestamp']))
-print(min(acsv['Timestamp']))
 
-sdate="2019-01-01" # if not defined, default to earliest
-edate="2019-04-01"                             #latest
+sdate=min(acsv['Timestamp'])
+edate=max(acsv['Timestamp'])
+
+if args.start!=None:
+	sdate=args.start
+if args.stop!=None:
+	edate=args.start
+
 acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
 for channel in acsv.to_numpy():
 	for word in str(channel[1]).split():
 		cleanedword=regex.sub('', word).strip().lower()
-		if cleanedword not in uwords:
-			uwords[cleanedword]=1
-		else:
-			uwords[cleanedword]+=1
+		if cleanedword != '':
+			if cleanedword not in uwords:
+				uwords[cleanedword]=1
+			else:
+				uwords[cleanedword]+=1
 for tple in uwords:
 	twords.append((tple, uwords[tple]))
 twords=sorted(twords, key=lambda x: x[1])
@@ -56,11 +61,10 @@ else:
 
 if args.bar:
 	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
-		   'Date range: '+sdate+' - '+edate+'<br>'+
+		   'Date range: '+str(sdate.date())+' - '+str(edate.date())+'<br>'+
 		   'Words presented: '+str(nmax))
 
 	x = [i[0] for i in twords[-nmax:]]
-	x=['<space>' if i=='' else i for i in x]
 	y = [i[1] for i in twords[-nmax:]]
 	np = go.Bar(
 	    x=x,
