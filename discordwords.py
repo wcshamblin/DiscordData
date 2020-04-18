@@ -8,7 +8,7 @@ import argparse
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
 ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
-ps.add_argument("-b", "--bar", action="store_true", help="Present data as bar chart")
+ps.add_argument("-b", "--bar", action="store_true", help="Present data as bar chart (default)")
 ps.add_argument("-t", "--time", action="store_true", help="Present data as a timeseries")
 ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 40, WordCloud defaults to 512")
 ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
@@ -70,27 +70,23 @@ if args.cloud:
 	plt.axis("off")
 	plt.show()
 
-
 if args.time:
-	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
-	   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
+	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers'+
+	   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br> ')
 	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()      #remove time, keep date
 	del acsv['Contents']                                                      #remove contents of message
 	acsv['Count'] = acsv.groupby('Timestamp')['Timestamp'].transform('count') #create count col
 	acsv=acsv.drop_duplicates(keep="first").sort_values('Timestamp')          #drop duplicate dates
 
-	print(acsv)
-	dr=pd.date_range(min(acsv['Timestamp']), max(acsv['Timestamp']))
 	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 	acsv.set_index('Timestamp', inplace=True)
 	acsv=acsv.resample('D').mean().reset_index().fillna(0)
 	fig = go.Figure()
 	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count'])))
 	fig.update_layout(
-	    title_text="Time series with range slider and selectors"
+	    title_text=tt
 	)
 
-	# Add range slider
 	fig.update_layout(
 	    xaxis=dict(
 	        rangeselector=dict(
@@ -120,7 +116,7 @@ if args.time:
 	fig.show()
 
 
-if args.bar:
+if not args.cloud and not args.time:
 	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br>'+
 		   'Words presented: '+str(nmax))
