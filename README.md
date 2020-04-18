@@ -11,7 +11,14 @@ Extract the zip into a folder.
 chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/
 ```
-## Example commands
+
+### Dependencies
+* Plotly
+* Pandas
+* Wordcloud + matplotlib (Only if using wordcloud option)
+
+
+### Example commands
 
 #### Plot a bar chart
 ```bash
