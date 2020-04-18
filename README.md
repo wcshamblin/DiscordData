@@ -18,8 +18,6 @@ Please use the -h flags for additional graphing modes and information
 
 ## Example output
 Word Cloud:
-
-
 ![Word Cloud Output](https://drive.google.com/uc?export=download&id=1CsPUijeDBWQ7y6oIEH_QBxdUrczqffhI)
 
 
