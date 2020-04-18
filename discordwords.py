@@ -11,7 +11,7 @@ ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word
 ps.add_argument("-b", "--bar", action="store_true", help="Present data as bar chart")
 ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 40, WordCloud defaults to 512")
 ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
-ps.add_argument("-t", "--stop", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
+ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
  
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
@@ -31,10 +31,10 @@ sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
 
 if args.start!=None:
-	sdate=args.start
-if args.stop!=None:
-	edate=args.start
-
+	sdate=args.start[0]
+if args.end!=None:
+	edate=args.end[0]
+print(sdate)
 acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
 for channel in acsv.to_numpy():
@@ -61,7 +61,7 @@ else:
 
 if args.bar:
 	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers<br>'+
-		   'Date range: '+str(sdate.date())+' - '+str(edate.date())+'<br>'+
+		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br>'+
 		   'Words presented: '+str(nmax))
 
 	x = [i[0] for i in twords[-nmax:]]
