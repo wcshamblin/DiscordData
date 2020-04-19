@@ -36,9 +36,9 @@ acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
 
-if args.start!=None:
+if args.start is not None:
 	sdate=args.start[0]
-if args.end!=None:
+if args.end is not None:
 	edate=args.end[0]
 acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
