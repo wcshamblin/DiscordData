@@ -22,7 +22,7 @@ regex = re.compile('[^a-zA-Z]')
 assert os.path.isdir(args.path)
 messages_path = os.path.join(args.path, "messages")
 
-channels=glob((messages_path + "/*/messages.csv"))
+channels = glob(os.path.join(messages_path, "*", "messages.csv"))
 if len(channels)<1:
 	print(messages_path + " is not readable")
 	exit()
