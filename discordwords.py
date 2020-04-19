@@ -5,6 +5,8 @@ import sys
 import pandas as pd
 import plotly.graph_objects as go
 import argparse
+import os
+
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
 ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
@@ -17,11 +19,14 @@ ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
 
-channels=glob((args.path+"messages/*/messages.csv"))
+assert os.path.isdir(args.path)
+messages_path = os.path.join(args.path, "messages")
+
+channels=glob((messages_path + "/*/messages.csv"))
 if len(channels)<1:
-	print(args.path+"messages/ is not readable")
+	print(messages_path + " is not readable")
 	exit()
-servers=eval(open(args.path+"servers/index.json").read()).values()
+servers=eval(open(os.path.join(args.path, "servers", "index.json")).read()).values()
 messages=[]
 uwords={}
 twords=[]
