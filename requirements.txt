@@ -1,5 +1,0 @@
-pandas
-plotly
-
-# For wordcloud:
-matplotlib
