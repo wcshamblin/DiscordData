@@ -107,10 +107,10 @@ else:
 
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
-	fig.add_trace(go.Bar(x=x,y=y), row=1, col=1)
-	fig.add_trace(go.Bar(x=ddf['Timestamp'],y=ddf['Count']), row=2, col=2)
-	fig.add_trace(go.Bar(x=hdf['Timestamp'],y=hdf['Count']), row=2, col=1)
-	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count'])), row=1, col=2)
+	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
+	fig.add_trace(go.Bar(x=ddf['Timestamp'],y=ddf['Count'], name="Messages/Day"), row=2, col=2)
+	fig.add_trace(go.Bar(x=hdf['Timestamp'],y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
+	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count']),name="Messages/Date"), row=1, col=2)
 
 	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(acsv['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
