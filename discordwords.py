@@ -10,6 +10,7 @@ import json
 import os
 from plotly.subplots import make_subplots
 from time import tzname
+from pandas.api.types import CategoricalDtype
 
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
@@ -96,7 +97,7 @@ else:
 	ddf['Count'] = ddf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
 	ddf=ddf.drop_duplicates(keep="first")                                                #drop duplicate dates
 	dow=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-	ddf = ddf.set_index('Timestamp').loc[dow].reset_index()
+	ddf = ddf.groupby(['Timestamp']).sum().reindex(dow).fillna(0.0)
 
 	hdf=acsv.copy()
 	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
@@ -105,7 +106,7 @@ else:
 	hdf['Count'] = hdf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
 	hdf=hdf.drop_duplicates(keep="first").sort_values('Timestamp')                       #drop duplicate dates
 	hod=range(0,24)
-	hdf = hdf.set_index('Timestamp').loc[hod].reset_index()
+	hdf = hdf.groupby(['Timestamp']).sum().reindex(hod).fillna(0.0)
 
 	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()                 #remove time, keep date
 	del acsv['Contents']                                                                 #remove contents of message
@@ -118,8 +119,8 @@ else:
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
 	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
-	fig.add_trace(go.Bar(x=ddf['Timestamp'],y=ddf['Count'], name="Messages/Day"), row=2, col=2)
-	fig.add_trace(go.Bar(x=hdf['Timestamp'],y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
+	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=2)
+	fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
 	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count']),name="Messages/Date"), row=1, col=2)
 
 	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
