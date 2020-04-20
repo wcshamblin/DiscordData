@@ -115,7 +115,7 @@ else:
 	fig.add_trace(go.Bar(x=hdf['Timestamp'],y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
 	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count']),name="Messages/Date"), row=1, col=2)
 
-	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23], ticktext=['00:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']))
+	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
 	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(acsv['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
