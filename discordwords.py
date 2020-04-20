@@ -5,6 +5,7 @@ import sys
 import pandas as pd
 import plotly.graph_objects as go
 import argparse
+import json
 import os
 
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
@@ -26,7 +27,10 @@ channels = glob(os.path.join(messages_path, "*", "messages.csv"))
 if len(channels)<1:
 	print(messages_path + " is not readable")
 	exit()
-servers=eval(open(os.path.join(args.path, "servers", "index.json")).read()).values()
+
+with open(os.path.join(args.path, "servers", "index.json")) as f:
+    servers = json.load(f).values()
+
 messages=[]
 uwords={}
 twords=[]
