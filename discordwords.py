@@ -41,7 +41,7 @@ edate=max(acsv['Timestamp'])
 
 ltz=tzname[0].split()
 if len(ltz)>1:
-	ltz=''.join([i[0] for i in ltz])
+	ltz=[''.join([i[0] for i in ltz])]
 ltz=str(ltz[0])
 
 if args.start is not None:
