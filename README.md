@@ -8,18 +8,23 @@ Extract the zip into a folder.
 
 ## Running
 ### Linux/Mac:
+Installing dependencies
+```bash
+pip3 install -r ./requirements.txt
+```
+Running:
 ```bash
 chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/
 ```
 ### Windows:
-* Download Python 3 from https://www.python.org/downloads/windows/
-* Open Command Prompt and run these lines to install dependencies:
+Download Python 3 from https://www.python.org/downloads/windows/
+
+Installing dependencies
 ```bash
-pip3 install plotly
-pip3 install pandas
+pip3 install -r ./requirements.txt
 ```
-* And then, run:
+Running:
 ```bash
 python3.exe ./discordwords.py /path/to/discord/data/
 ```
