@@ -20,9 +20,9 @@ chmod 755 ./discordwords.py
 
 ### Example commands
 
-#### Plot a bar chart
+#### Plot the dashboard
 ```bash
-./discordwords.py /path/to/discord/data/ -b
+./discordwords.py /path/to/discord/data/ -d
 ```
 
 #### Plot a word cloud
@@ -30,27 +30,19 @@ chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/ -c
 ```
 
-#### Plot a time series
+#### Plot a wordcloud of messages between Jan 01 2018 and Jan 01 2019
 ```bash
-./discordwords.py /path/to/discord/data/ -t
-```
-
-#### Plot a timeseries of messages between Jan 01 2018 and Jan 01 2019
-```bash
-./discordwords.py /path/to/discord/data/ -t -s 2018-01-01 -e 2019-01-01
+./discordwords.py /path/to/discord/data/ -c -s 2018-01-01 -e 2019-01-01
 ```
 
 ## Example output
+Dashboard:
+![Bar Chart Output](./screenshots/dashboard.png)
+
+
 Word Cloud:
 
 ![Word Cloud Output](./screenshots/wordcloud.png)
-
-Bar Chart:
-![Bar Chart Output](./screenshots/barchart.png)
-
-Time Series:
-![Time Series Output](./screenshots/timeseries.png)
-
 
 
 ## TODO:
