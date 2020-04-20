@@ -19,13 +19,15 @@ ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-
 
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
-
-assert os.path.isdir(args.path)
+try:
+	assert os.path.isdir(args.path)
+except AssertionError as err:
+	print("Path not a valid folder")
 messages_path = os.path.join(args.path, "messages")
 
 channels = glob(os.path.join(messages_path, "*", "messages.csv"))
 if len(channels)<1:
-	print(messages_path + " is not readable")
+	print(args.path + " is not a readable discord data folder")
 	exit()
 servers=eval(open(os.path.join(args.path, "servers", "index.json")).read()).values()
 messages=[]
@@ -36,6 +38,11 @@ acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 
 sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
+
+ltz=tzname[0].split()
+if len(ltz)>1:
+	ltz=''.join([i[0] for i in ltz])
+ltz=str(ltz[0])
 
 if args.start is not None:
 	sdate=args.start[0]
@@ -90,7 +97,7 @@ else:
 
 	hdf=acsv.copy()
 	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
-	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(tzname[0]).dt.hour #localize timestamp
+	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour #localize timestamp
 	del hdf['Contents']                                                                  #remove contents of message
 	hdf['Count'] = hdf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
 	hdf=hdf.drop_duplicates(keep="first").sort_values('Timestamp')                       #drop duplicate dates
