@@ -6,13 +6,14 @@ import pandas as pd
 import plotly.graph_objects as go
 import argparse
 import os
+from plotly.subplots import make_subplots
+from time import tzname
 
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
 ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
-ps.add_argument("-b", "--bar", action="store_true", help="Present data as bar chart (default)")
-ps.add_argument("-t", "--time", action="store_true", help="Present data as a timeseries")
-ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 40, WordCloud defaults to 512")
+ps.add_argument("-d", "--dash", action="store_true", help="Present data with dashboard (default)")
+ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 20, WordCloud defaults to 512")
 ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
 ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
 
@@ -60,7 +61,7 @@ else:
 	if args.cloud:
 		nmax=512
 	else:
-		nmax=40
+		nmax=20
 if nmax>len(twords) or nmax==-1:
 	nmax=len(twords)
 
@@ -74,62 +75,50 @@ if args.cloud:
 	plt.axis("off")
 	plt.show()
 
-if args.time:
-	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
-	   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br> ')
-	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()      #remove time, keep date
-	del acsv['Contents']                                                      #remove contents of message
-	acsv['Count'] = acsv.groupby('Timestamp')['Timestamp'].transform('count') #create count col
-	acsv=acsv.drop_duplicates(keep="first").sort_values('Timestamp')          #drop duplicate dates
 
+else:
+	fig = make_subplots(rows=2, cols=2, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day"))
+
+	ddf = acsv.copy()
+	ddf['Timestamp'] = pd.to_datetime(ddf['Timestamp']).dt.normalize()                   #remove time, keep date
+	del ddf['Contents']                                                                  #remove contents of message
+	ddf['Timestamp'] = ddf['Timestamp'].dt.day_name()                                    #convert to day of week
+	ddf['Count'] = ddf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
+	ddf=ddf.drop_duplicates(keep="first")                                                #drop duplicate dates
+	dow=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+	ddf = ddf.set_index('Timestamp').loc[dow].reset_index()
+
+	hdf=acsv.copy()
+	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
+	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(tzname[0]).dt.hour #localize timestamp
+	del hdf['Contents']                                                                  #remove contents of message
+	hdf['Count'] = hdf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
+	hdf=hdf.drop_duplicates(keep="first").sort_values('Timestamp')                       #drop duplicate dates
+	hod=range(0,24)
+	hdf = hdf.set_index('Timestamp').loc[hod].reset_index()
+
+	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()                 #remove time, keep date
+	del acsv['Contents']                                                                 #remove contents of message
+	acsv['Count'] = acsv.groupby('Timestamp')['Timestamp'].transform('count')            #create count col
+	acsv=acsv.drop_duplicates(keep="first").sort_values('Timestamp')                     #drop duplicate dates
 	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 	acsv.set_index('Timestamp', inplace=True)
 	acsv=acsv.resample('D').mean().reset_index().fillna(0)
-	fig = go.Figure()
-	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count'])))
+
+	x = [i[0] for i in twords[-nmax:]]
+	y = [i[1] for i in twords[-nmax:]]
+	fig.add_trace(go.Bar(x=x,y=y), row=1, col=1)
+	fig.add_trace(go.Bar(x=ddf['Timestamp'],y=ddf['Count']), row=2, col=2)
+	fig.add_trace(go.Bar(x=hdf['Timestamp'],y=hdf['Count']), row=2, col=1)
+	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count'])), row=1, col=2)
+
+	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(acsv['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
+		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
+
 	fig.update_layout(
 	    title_text=tt
 	)
 
-	fig.update_layout(
-	    xaxis=dict(
-	        rangeselector=dict(
-	            buttons=list([
-	                dict(count=1,
-	                     label="1d",
-	                     step="day",
-	                     stepmode="backward"),
-	                dict(count=1,
-	                     label="1m",
-	                     step="month",
-	                     stepmode="backward"),
-	                dict(count=1,
-	                     label="1y",
-	                     step="year",
-	                     stepmode="backward"),
-	                dict(step="all")
-	            ])
-	        ),
-	        rangeslider=dict(
-	            visible=True
-	        ),
-	        type="date"
-	    )
-	)	
-
-	fig.show()
-
-
-if not args.cloud and not args.time:
-	tt=str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
-		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'<br>'+
-		   'Unique words presented: '+str(nmax))
-	x = [i[0] for i in twords[-nmax:]]
-	y = [i[1] for i in twords[-nmax:]]
-	pl = go.Bar(
-	    x=x,
-	    y=y,
-	    )
 	layout = go.Layout(
 	    title=tt,
 	    xaxis=dict(
@@ -141,5 +130,4 @@ if not args.cloud and not args.time:
 	    hovermode='closest',
 	    #showlegend=True
 	)
-	figure = go.Figure(pl, layout=layout)
-	figure.show()
+	fig.show()
