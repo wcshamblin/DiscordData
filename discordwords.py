@@ -1,10 +1,12 @@
 #!/usr/bin/python3
+from collections import defaultdict
 from glob import glob
 import re
 import sys
 import pandas as pd
 import plotly.graph_objects as go
 import argparse
+import json
 import os
 from plotly.subplots import make_subplots
 from time import tzname
@@ -29,9 +31,12 @@ channels = glob(os.path.join(messages_path, "*", "messages.csv"))
 if len(channels)<1:
 	print(args.path + " is not a readable discord data folder")
 	exit()
-servers=eval(open(os.path.join(args.path, "servers", "index.json")).read()).values()
+
+with open(os.path.join(args.path, "servers", "index.json")) as f:
+    servers = json.load(f).values()
+
 messages=[]
-uwords={}
+uwords = defaultdict(int)
 twords=[]
 acsv = pd.concat([pd.read_csv(str(i), usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
@@ -53,11 +58,9 @@ acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 for channel in acsv.to_numpy():
 	for word in str(channel[1]).split():
 		cleanedword=regex.sub('', word).strip().lower()
-		if cleanedword != '':
-			if cleanedword not in uwords:
-				uwords[cleanedword]=1
-			else:
-				uwords[cleanedword]+=1
+		if cleanedword:
+			uwords[cleanedword] += 1
+
 for tple in uwords:
 	twords.append((tple, uwords[tple]))
 twords=sorted(twords, key=lambda x: x[1])
@@ -119,7 +122,7 @@ else:
 	fig.add_trace(go.Bar(x=hdf['Timestamp'],y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
 	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count']),name="Messages/Date"), row=1, col=2)
 
-	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23], ticktext=['00:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']))
+	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
 	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(acsv['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
