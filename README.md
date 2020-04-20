@@ -7,9 +7,21 @@ User Settings -> Privacy & Safety -> Request all of my Data
 Extract the zip into a folder.
 
 ## Running
+### Linux/Mac:
 ```bash
 chmod 755 ./discordwords.py
 ./discordwords.py /path/to/discord/data/
+```
+### Windows:
+* Download Python 3 from https://www.python.org/downloads/windows/
+* Open Command Prompt and run these lines to install dependencies:
+```bash
+pip3 install plotly
+pip3 install pandas
+```
+* And then, run:
+```bash
+python3.exe ./discordwords.py /path/to/discord/data/
 ```
 
 ### Dependencies
