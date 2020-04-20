@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from collections import defaultdict
 from glob import glob
 import re
 import sys
@@ -32,7 +33,7 @@ with open(os.path.join(args.path, "servers", "index.json")) as f:
     servers = json.load(f).values()
 
 messages=[]
-uwords={}
+uwords = defaultdict(int)
 twords=[]
 acsv = pd.concat([pd.read_csv(str(i), usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
@@ -49,11 +50,9 @@ acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 for channel in acsv.to_numpy():
 	for word in str(channel[1]).split():
 		cleanedword=regex.sub('', word).strip().lower()
-		if cleanedword != '':
-			if cleanedword not in uwords:
-				uwords[cleanedword]=1
-			else:
-				uwords[cleanedword]+=1
+		if cleanedword:
+			uwords[cleanedword] += 1
+
 for tple in uwords:
 	twords.append((tple, uwords[tple]))
 twords=sorted(twords, key=lambda x: x[1])
