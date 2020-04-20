@@ -36,12 +36,13 @@ chmod 755 ./discordwords.py
 ```
 
 ## Example output
+Dashboard:
+![Bar Chart Output](./screenshots/dashboard.png)
+
+
 Word Cloud:
 
 ![Word Cloud Output](./screenshots/wordcloud.png)
-
-Dashboard:
-![Bar Chart Output](./screenshots/dashboard.png)
 
 
 ## TODO:
