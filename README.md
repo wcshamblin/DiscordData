@@ -29,25 +29,19 @@ Running:
 python3.exe ./discordwords.py /path/to/discord/data/
 ```
 
-### Dependencies
-* Plotly
-* Pandas
-* Wordcloud + matplotlib (Only if using wordcloud option)
+## Example commands
 
-
-### Example commands
-
-#### Plot the dashboard
+### Plot the dashboard
 ```bash
 ./discordwords.py /path/to/discord/data/ -d
 ```
 
-#### Plot a word cloud
+### Plot a word cloud
 ```bash
 ./discordwords.py /path/to/discord/data/ -c
 ```
 
-#### Plot a wordcloud of messages between Jan 01 2018 and Jan 01 2019
+### Plot a wordcloud of messages between Jan 01 2018 and Jan 01 2019
 ```bash
 ./discordwords.py /path/to/discord/data/ -c -s 2018-01-01 -e 2019-01-01
 ```
