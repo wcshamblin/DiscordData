@@ -59,4 +59,6 @@ Word Cloud:
 ## TODO:
 ~~Implement datetime selector~~
 
+Networking graph using recepients from channel.json
+
 Implement some sort of server-specific view for messages
