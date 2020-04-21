@@ -59,6 +59,6 @@ Word Cloud:
 ## TODO:
 ~~Implement datetime selector~~
 
-Networking graph using recepients from channel.json
+Add option to exclude specific dates from dataset
 
 Implement some sort of server-specific view for messages
