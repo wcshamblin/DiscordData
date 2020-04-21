@@ -8,7 +8,7 @@ Extract the zip into a folder.
 
 ## Running
 ### Linux/Mac:
-Installing dependencies
+Installing dependencies:
 ```bash
 pip3 install -r ./requirements.txt
 ```
@@ -20,7 +20,7 @@ chmod 755 ./discordwords.py
 ### Windows:
 Download Python 3 from https://www.python.org/downloads/windows/
 
-Installing dependencies
+Installing dependencies:
 ```bash
 pip3 install -r ./requirements.txt
 ```
