@@ -43,7 +43,7 @@ python3.exe ./discordwords.py /path/to/discord/data/
 
 ### Plot a wordcloud of messages between Jan 01 2018 and Jan 01 2019
 ```bash
-./discordwords.py /path/to/discord/data/ -c -s 2018-01-01 -e 2019-01-01
+./discordwords.py /path/to/discord/data/ -c -s 2018/01/01 -e 2019/01/01
 ```
 
 ## Example output
