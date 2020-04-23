@@ -16,10 +16,10 @@ ps = argparse.ArgumentParser(description='Parses and presents data from Discord\
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
 ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
 ps.add_argument("-d", "--dash", action="store_true", help="Present data with dashboard (default)")
-ps.add_argument("-r", "--remove", action='append', help="Remove list of date(s) from data")
+ps.add_argument("-r", "--remove", type=str, help="Remove list of date(s) from data (year/month/day) or (year/month/day-year/month/day)")
 ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 20, WordCloud defaults to 512")
-ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
-ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
+ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year/month/day) Defaults to beginning of data")
+ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year/month/day) Defaults to end of data")
 
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
@@ -55,16 +55,21 @@ if args.start is not None:
 	sdate=args.start[0]
 if args.end is not None:
 	edate=args.end[0]
+try:
+	acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
-acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
+except TypeError as error:
+	print("TypeError: Start/End date passed was not parsable")
+	exit()
 
 if args.remove:
-	for rdate in args.remove:
-		try:
-			acsv=acsv[acsv['Timestamp'].dt.date != pd.to_datetime(rdate).tz_localize('UTC')]
-		except ValueError as error:
-			print("ValueError: Date passed was not parsable")
-			exit()
+	args.remove=args.remove.split('-')
+	args.remove=pd.date_range(args.remove[0], args.remove[-1], tz='UTC')
+	try:
+		acsv=acsv[[d not in args.remove for d in acsv['Timestamp'].dt.date]]
+	except ValueError as error:
+		print("ValueError: Remove date passed was not parsable")
+		exit()
 
 for channel in acsv.to_numpy():
 	for word in str(channel[1]).split():
