@@ -16,6 +16,7 @@ ps = argparse.ArgumentParser(description='Parses and presents data from Discord\
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
 ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
 ps.add_argument("-d", "--dash", action="store_true", help="Present data with dashboard (default)")
+ps.add_argument("-r", "--remove", action='append', help="Remove list of date(s) from data")
 ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 20, WordCloud defaults to 512")
 ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year-month-day) Defaults to beginning of data")
 ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year-month-day) Defaults to end of data")
@@ -54,7 +55,16 @@ if args.start is not None:
 	sdate=args.start[0]
 if args.end is not None:
 	edate=args.end[0]
+
 acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
+
+if args.remove:
+	for rdate in args.remove:
+		try:
+			acsv=acsv[acsv['Timestamp'].dt.date != pd.to_datetime(rdate).tz_localize('UTC')]
+		except ValueError as error:
+			print("ValueError: Date passed was not parsable")
+			exit()
 
 for channel in acsv.to_numpy():
 	for word in str(channel[1]).split():
@@ -101,7 +111,7 @@ else:
 
 	hdf=acsv.copy()
 	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
-	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour #localize timestamp
+	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour       #localize timestamp
 	del hdf['Contents']                                                                  #remove contents of message
 	hdf['Count'] = hdf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
 	hdf=hdf.drop_duplicates(keep="first").sort_values('Timestamp')                       #drop duplicate dates
