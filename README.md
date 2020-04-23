@@ -8,7 +8,7 @@ Extract the zip into a folder.
 
 ## Running
 ### Linux/Mac:
-Installing dependencies
+Installing dependencies:
 ```bash
 pip3 install -r ./requirements.txt
 ```
@@ -20,7 +20,7 @@ chmod 755 ./discordwords.py
 ### Windows:
 Download Python 3 from https://www.python.org/downloads/windows/
 
-Installing dependencies
+Installing dependencies:
 ```bash
 pip3 install -r ./requirements.txt
 ```
@@ -29,25 +29,19 @@ Running:
 python3.exe ./discordwords.py /path/to/discord/data/
 ```
 
-### Dependencies
-* Plotly
-* Pandas
-* Wordcloud + matplotlib (Only if using wordcloud option)
+## Example commands
 
-
-### Example commands
-
-#### Plot the dashboard
+### Plot the dashboard
 ```bash
 ./discordwords.py /path/to/discord/data/ -d
 ```
 
-#### Plot a word cloud
+### Plot a word cloud
 ```bash
 ./discordwords.py /path/to/discord/data/ -c
 ```
 
-#### Plot a wordcloud of messages between Jan 01 2018 and Jan 01 2019
+### Plot a wordcloud of messages between Jan 01 2018 and Jan 01 2019
 ```bash
 ./discordwords.py /path/to/discord/data/ -c -s 2018-01-01 -e 2019-01-01
 ```
@@ -64,5 +58,7 @@ Word Cloud:
 
 ## TODO:
 ~~Implement datetime selector~~
+
+Add option to exclude specific dates from dataset
 
 Implement some sort of server-specific view for messages
