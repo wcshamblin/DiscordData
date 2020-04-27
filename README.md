@@ -59,6 +59,8 @@ Word Cloud:
 ## TODO:
 ~~Implement datetime selector~~
 
-Add option to exclude specific dates from dataset
+~~Add option to exclude specific dates from dataset~~
 
 Implement some sort of server-specific view for messages
+
+Friend/Server networking graph (Currently impossible due to lack of data)
