@@ -46,10 +46,7 @@ acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
 
-ltz=tzname[0].split()
-if len(ltz)>1:
-	ltz=[''.join([i[0] for i in ltz])]
-ltz=str(ltz[0])
+ltz=''.join(re.findall('([A-Z])', tzname[0]))
 
 if args.start is not None:
 	sdate=args.start[0]
