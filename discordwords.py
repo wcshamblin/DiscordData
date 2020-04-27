@@ -11,6 +11,8 @@ import os
 from plotly.subplots import make_subplots
 from time import tzname
 from pandas.api.types import CategoricalDtype
+from pytz.exceptions import UnknownTimeZoneError
+import warnings
 
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
@@ -113,7 +115,11 @@ else:
 
 	hdf=acsv.copy()
 	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
-	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour       #localize timestamp
+	try:	
+		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour       #localize timestamp
+	except UnknownTimeZoneError as error:
+		warnings.warn("Timezone could not be localized, using UTC...")
+		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.hour
 	del hdf['Contents']                                                                  #remove contents of message
 	hdf['Count'] = hdf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
 	hdf=hdf.drop_duplicates(keep="first").sort_values('Timestamp')                       #drop duplicate dates
