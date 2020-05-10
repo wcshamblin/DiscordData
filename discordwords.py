@@ -89,7 +89,7 @@ def load_cache(read_func, path, **kwargs):
 
     return df
 
-def countTimestamp(idf):
+def count_timestamp(idf):
     """Count number of events per day within dataframe"""
     df = idf.copy()  # Don't modify the argument
 
@@ -103,35 +103,31 @@ def countTimestamp(idf):
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms').dt.tz_localize(None)
     df['timestamp'] = df['timestamp'].dt.normalize()
 
-	# Create count col
-    df['Count'] = df.groupby('timestamp')['timestamp'].transform('count')
-	# Drop duplicate dates
-    df=df.drop_duplicates(keep="first").sort_values('timestamp')
+    series = df['timestamp'].value_counts()
+    # Set missing dates to 0
+    series = series.resample('D').sum().sort_index()
+    return pd.DataFrame({'timestamp': series.index, 'Count': series.values})
 
-    df.set_index('timestamp', inplace=True)
-    df=df.resample('D').mean().reset_index().fillna(0)
-    return df
-
-def getAnalyticsCount(path, atype):
+def get_analytics_count(path, atype):
     """Return dataframe representing number of events per day"""
     search = os.path.join(path, "activity", atype, "*json")
     files = [os.path.abspath(i) for i in glob(search)]
 
     df = pd.concat([load_cache(pd.read_json, i, convert_dates=False, lines=True) for i in files],
                    ignore_index=True)
-    return countTimestamp(df)
+    return count_timestamp(df)
 
-def getActivityCount(path):
+def get_activity_count(path):
     """Return dictionary of dataframes representing number of events per day"""
     activity_path = os.path.join(path, "activity")
     activity = {}
 
     for atype in os.listdir(activity_path):
-        activity[atype] = getAnalyticsCount(path, atype)
+        activity[atype] = get_analytics_count(path, atype)
 
     return activity
 
-activity = getActivityCount(args.path)
+activity = get_activity_count(args.path)
 
 messages=[]
 uwords = defaultdict(int)
@@ -201,11 +197,12 @@ else:
 
 	ddf = acsv.copy()
 	ddf['Timestamp'] = pd.to_datetime(ddf['Timestamp']).dt.normalize()                   #remove time, keep date
-	del ddf['Contents']                                                                  #remove contents of message
 	ddf['Timestamp'] = ddf['Timestamp'].dt.day_name()                                    #convert to day of week
-	ddf['Count'] = ddf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
-	ddf=ddf.drop_duplicates(keep="first")                                                #drop duplicate dates
-	dow=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+	series = ddf['Timestamp'].value_counts()
+	ddf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
+
+	dow=('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
 	ddf = ddf.groupby(['Timestamp']).sum().reindex(dow).fillna(0.0)
 
 	hdf=acsv.copy()
@@ -216,25 +213,28 @@ else:
 		warnings.warn("Timezone could not be localized, using UTC...")
 		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.hour
 	del hdf['Contents']                                                                  #remove contents of message
-	hdf['Count'] = hdf.groupby('Timestamp')['Timestamp'].transform('count')              #create count col
-	hdf=hdf.drop_duplicates(keep="first").sort_values('Timestamp')                       #drop duplicate dates
+
+	series = hdf['Timestamp'].value_counts()
+	hdf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
+
 	hod=range(0,24)
 	hdf = hdf.groupby(['Timestamp']).sum().reindex(hod).fillna(0.0)
 
 	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()                 #remove time, keep date
 	del acsv['Contents']                                                                 #remove contents of message
-	acsv['Count'] = acsv.groupby('Timestamp')['Timestamp'].transform('count')            #create count col
-	acsv=acsv.drop_duplicates(keep="first").sort_values('Timestamp')                     #drop duplicate dates
-	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
-	acsv.set_index('Timestamp', inplace=True)
-	acsv=acsv.resample('D').mean().reset_index().fillna(0)
+
+	series = acsv['Timestamp'].value_counts()
+	# Set missing dates to 0
+	series = series.resample('D').sum().sort_index()
+	tsdf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
+
 
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
 	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
 	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=2)
 	fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
-	fig.add_trace(go.Scatter(x=list(acsv['Timestamp']), y=list(acsv['Count']),name="Messages/Date"), row=1, col=2)
+	fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
 
 	for key, value in activity.items():
 		fig.add_trace(go.Scatter(x=list(value['timestamp']), y=list(value['Count']),
@@ -242,7 +242,7 @@ else:
 
 	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
-	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(acsv['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
+	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(tsdf['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
 
 	fig.update_layout(
