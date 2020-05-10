@@ -39,10 +39,60 @@ if len(channels)<1:
 with open(os.path.join(args.path, "servers", "index.json")) as f:
     servers = json.load(f).values()
 
+def load_cache(read_func, path, **kwargs):
+    abspath = os.path.abspath(path)
+    CACHE_PATH = "cache"
+    os.makedirs(CACHE_PATH, exist_ok=True)
+
+    # Associates each message path with cache file
+    CACHE_INDEX = os.path.join(CACHE_PATH, "index.json")
+
+    if os.path.isfile(CACHE_INDEX):
+        with open(CACHE_INDEX) as f:
+            index = json.load(f)
+
+        try:
+            cache_file = index[abspath]
+        except KeyError:  # File is not cached
+            read_source = True
+        else:  # Check if cache file exists
+            read_source = not os.path.isfile(cache_file)
+    else:
+        read_source = True
+
+        with open(CACHE_INDEX, 'w') as f:  # Initialize index.json
+            json.dump({}, f)
+
+    if read_source:
+        # Read number of entries
+        with open(CACHE_INDEX) as f:
+            count = len(json.load(f))
+
+        filename = f"{count}.pkl"
+        cache_file = os.path.abspath(os.path.join(CACHE_PATH, filename))
+
+		# Write cache file
+        df = read_func(abspath, **kwargs)
+        df.to_pickle(cache_file)
+
+        # Update index.json
+        with open(CACHE_INDEX) as f:
+            index = json.load(f)
+
+        index[abspath] = cache_file
+
+        with open(CACHE_INDEX, 'w') as f:
+            json.dump(index, f)
+
+    else:  # Load cache
+        df = pd.read_pickle(cache_file)
+
+    return df
+
 messages=[]
 uwords = defaultdict(int)
-twords=[]
-acsv = pd.concat([pd.read_csv(str(i), usecols=[1, 2]) for i in channels])
+twords = []
+acsv = pd.concat([load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 
 sdate=min(acsv['Timestamp'])
@@ -115,7 +165,7 @@ else:
 
 	hdf=acsv.copy()
 	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
-	try:	
+	try:
 		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour       #localize timestamp
 	except UnknownTimeZoneError as error:
 		warnings.warn("Timezone could not be localized, using UTC...")
