@@ -9,10 +9,10 @@ import argparse
 import json
 import os
 from plotly.subplots import make_subplots
-from time import tzname
 from pandas.api.types import CategoricalDtype
-from pytz.exceptions import UnknownTimeZoneError
 import warnings
+
+import graphs.messages
 
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
@@ -136,8 +136,6 @@ acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
 
-ltz=''.join(re.findall('([A-Z])', tzname[0]))
-
 if args.start is not None:
 	sdate=args.start[0]
 if args.end is not None:
@@ -198,45 +196,18 @@ else:
 	fig = make_subplots(rows=3, cols=2, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day",
 														"Analytics per day"))
 
-	ddf = acsv.copy()
-	ddf['Timestamp'] = pd.to_datetime(ddf['Timestamp']).dt.normalize()                   #remove time, keep date
-	ddf['Timestamp'] = ddf['Timestamp'].dt.day_name()                                    #convert to day of week
-
-	series = ddf['Timestamp'].value_counts()
-	ddf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
-
-	dow=('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-	ddf = ddf.groupby(['Timestamp']).sum().reindex(dow).fillna(0.0)
-
-	hdf=acsv.copy()
-	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
-	try:
-		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour       #localize timestamp
-	except UnknownTimeZoneError as error:
-		warnings.warn("Timezone could not be localized, using UTC...")
-		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.hour
-	del hdf['Contents']                                                                  #remove contents of message
-
-	series = hdf['Timestamp'].value_counts()
-	hdf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
-
-	hod=range(0,24)
-	hdf = hdf.groupby(['Timestamp']).sum().reindex(hod).fillna(0.0)
-
-	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()                 #remove time, keep date
-	del acsv['Contents']                                                                 #remove contents of message
-
-	series = acsv['Timestamp'].value_counts()
-	# Set missing dates to 0
-	series = series.resample('D').sum().sort_index()
-	tsdf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
-
 
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
 	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
+
+	ddf = graphs.messages.perDay(acsv)
 	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=2)
+
+	hdf = graphs.messages.perHour(acsv)
 	fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
+
+	tsdf = graphs.messages.perDate(acsv)
 	fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
 
 	for key, value in activity.items():
