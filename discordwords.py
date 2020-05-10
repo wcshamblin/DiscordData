@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from collections import defaultdict
+from collections import Counter
 from glob import glob
 import re
 import sys
@@ -130,8 +130,6 @@ def get_activity_count(path):
 activity = get_activity_count(args.path)
 
 messages=[]
-uwords = defaultdict(int)
-twords = []
 acsv = pd.concat([load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 
@@ -160,15 +158,20 @@ if args.remove:
 		print("ValueError: Remove date passed was not parsable")
 		exit()
 
-for channel in acsv.to_numpy():
-	for word in str(channel[1]).split():
-		cleanedword=regex.sub('', word).strip().lower()
-		if cleanedword:
-			uwords[cleanedword] += 1
+def get_twords(acsv):
+	uwords = Counter()
 
-for tple in uwords:
-	twords.append((tple, uwords[tple]))
-twords=sorted(twords, key=lambda x: x[1])
+	for channel in acsv.to_numpy():
+		for word in str(channel[1]).split():
+			cleanedword=regex.sub('', word).strip().lower()
+			if cleanedword:
+				uwords[cleanedword] += 1
+
+	twords = list(uwords.items())
+	twords=sorted(twords, key=lambda x: x[1])
+	return twords
+
+twords = get_twords(acsv)
 
 if args.num is not None:
 	nmax=args.num[0]
