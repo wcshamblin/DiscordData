@@ -195,8 +195,8 @@ if args.cloud:
 
 
 else:
-	fig = make_subplots(rows=2, cols=2, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day"))
-														#"Analytics per day"))
+	fig = make_subplots(rows=3, cols=2, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day",
+														"Analytics per day"))
 
 	ddf = acsv.copy()
 	ddf['Timestamp'] = pd.to_datetime(ddf['Timestamp']).dt.normalize()                   #remove time, keep date
