@@ -195,8 +195,8 @@ if args.cloud:
 
 
 else:
-	fig = make_subplots(rows=3, cols=2, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day",
-														"Analytics per day"))
+	fig = make_subplots(rows=2, cols=2, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day"))
+														#"Analytics per day"))
 
 	ddf = acsv.copy()
 	ddf['Timestamp'] = pd.to_datetime(ddf['Timestamp']).dt.normalize()                   #remove time, keep date
@@ -211,7 +211,7 @@ else:
 	hdf=acsv.copy()
 	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
 	try:
-		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour       #localize timestamp
+		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour   #localize timestamp
 	except UnknownTimeZoneError as error:
 		warnings.warn("Timezone could not be localized, using UTC...")
 		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.hour
@@ -241,7 +241,7 @@ else:
 
 	for key, value in activity.items():
 		fig.add_trace(go.Scatter(x=list(value['timestamp']), y=list(value['Count']),
-								 name=f"{key.title()}/Day"), row=3, col=1)
+								 name=f"{key.title()}/Day"), row=2, col=1)
 
 	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
