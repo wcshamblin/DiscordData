@@ -33,12 +33,3 @@ def perHour(acsv):
 
 	hod=range(0,24)
 	return hdf.groupby(['Timestamp']).sum().reindex(hod).fillna(0.0)
-
-def perDate(acsv):
-	tsdf = acsv.copy()
-	tsdf['Timestamp'] = pd.to_datetime(tsdf['Timestamp']).dt.normalize()                 #remove time, keep date
-
-	series = acsv['Timestamp'].value_counts()
-	# Set missing dates to 0
-	series = series.resample('D').sum().sort_index()
-	return pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
