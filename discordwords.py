@@ -155,11 +155,20 @@ def get_all_series(path, cols):
 
     dtypes = {col: "category" for col in cols}
 
-    df = pd.concat([load_cache(pd.read_json, i, dtype=dtypes,
-							   convert_dates=False, lines=True) for i in files],
-                   ignore_index=True)
+    # Load all files but drop all non-essential columns
+    dfs = []
+    for i in files:
+        next_df = load_cache(pd.read_json, i, dtype=dtypes, convert_dates=False, lines=True)
+        drop_cols = set(next_df.columns) - {"timestamp", *cols}
+        next_df.drop(drop_cols, axis=1, inplace=True)
+        dfs.append(next_df)
 
-    fp_df = {col: get_series(df, col) for col in cols}  # Fingerprinting info
+    df = pd.concat(dfs, ignore_index=True)
+
+    fp_df = {}
+    for col in cols:
+        print(f"Produced {col} series.")
+        fp_df[col] = get_series(df, col)
 
     return fp_df
 
