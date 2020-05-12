@@ -94,6 +94,18 @@ def load_cache(read_func, path, **kwargs):
 
     return df
 
+
+def load_cols(read_func, files, cols=[], **kwargs):
+    dfs = []
+    for i in files:
+        next_df = load_cache(read_func, i, **kwargs)
+        drop_cols = set(next_df.columns) - {"timestamp", *cols}
+        next_df.drop(drop_cols, axis=1, inplace=True)
+        dfs.append(next_df)
+
+    return pd.concat(dfs, ignore_index=True)
+
+
 def count_timestamp(df, unix=True, col='timestamp'):
     """Count number of events per day within dataframe. Mutates argument."""
 
@@ -143,9 +155,9 @@ def get_analytics_count(path, atype):
     search = os.path.join(path, "activity", atype, "*json")
     files = [os.path.abspath(i) for i in glob(search)]
 
-    df = pd.concat([load_cache(pd.read_json, i,
-							   convert_dates=False, lines=True) for i in files],
-                   ignore_index=True)
+    df = load_cols(pd.read_json, files,
+                   convert_dates=False, lines=True)
+
     return count_timestamp(df)
 
 def get_all_series(path, cols):
@@ -156,14 +168,8 @@ def get_all_series(path, cols):
     dtypes = {col: "category" for col in cols}
 
     # Load all files but drop all non-essential columns
-    dfs = []
-    for i in files:
-        next_df = load_cache(pd.read_json, i, dtype=dtypes, convert_dates=False, lines=True)
-        drop_cols = set(next_df.columns) - {"timestamp", *cols}
-        next_df.drop(drop_cols, axis=1, inplace=True)
-        dfs.append(next_df)
-
-    df = pd.concat(dfs, ignore_index=True)
+    df = load_cols(pd.read_json, files, cols,
+                   dtype=dtypes, convert_dates=False, lines=True)
 
     fp_df = {}
     for col in cols:
