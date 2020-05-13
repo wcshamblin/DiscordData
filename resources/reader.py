@@ -5,7 +5,7 @@ import pandas as pd
 
 def load_cache(read_func, path, **kwargs):
     abspath = os.path.abspath(path)
-    CACHE_PATH = "cache"
+    CACHE_PATH = os.path.join("cache", "dataframes")
     os.makedirs(CACHE_PATH, exist_ok=True)
 
     key = json.dumps({
