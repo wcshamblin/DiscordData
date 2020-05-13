@@ -267,7 +267,6 @@ else:
 														"Analytics", "City info", "IP info", "OS info",
 														"Release channel", "Guild ID", "Event Type", "Private"))
 
-
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
 	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
@@ -276,7 +275,7 @@ else:
 	tsdf = count_timestamp(acsv.copy(), unix=False, col="Timestamp")
 	fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
 
-	ddf = graphs.messages.perDay(acsv)
+  ddf = graphs.messages.perDay(acsv)
 	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=1)
 
 	hdf = graphs.messages.perHour(acsv)
@@ -313,7 +312,7 @@ else:
 	for key, value in fp_df['private'].items():
 		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=3)
 
-	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
+  fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
 	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(tsdf['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
