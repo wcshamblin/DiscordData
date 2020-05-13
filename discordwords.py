@@ -275,7 +275,8 @@ else:
 	tsdf = count_timestamp(acsv.copy(), unix=False, col="Timestamp")
 	fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
 
-  ddf = graphs.messages.perDay(acsv)
+  	ddf = graphs.messages.perDay(acsv)
+	
 	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=1)
 
 	hdf = graphs.messages.perHour(acsv)
