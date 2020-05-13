@@ -26,15 +26,15 @@ ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year/month/
 args=ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
 try:
-	assert os.path.isdir(args.path)
+    assert os.path.isdir(args.path)
 except AssertionError as err:
-	print("Path not a valid folder")
+    print("Path not a valid folder")
 messages_path = os.path.join(args.path, "messages")
 
 channels = glob(os.path.join(messages_path, "*", "messages.csv"))
 if len(channels)<1:
-	print(args.path + " is not a readable discord data folder")
-	exit()
+    print(args.path + " is not a readable discord data folder")
+    exit()
 
 with open(os.path.join(args.path, "servers", "index.json")) as f:
     servers = json.load(f)
@@ -76,7 +76,7 @@ def load_cache(read_func, path, **kwargs):
         filename = f"{count}.pkl"
         cache_file = os.path.abspath(os.path.join(CACHE_PATH, filename))
 
-		# Write cache file
+        # Write cache file
         df = read_func(abspath, **kwargs)
         df.to_pickle(cache_file)
 
@@ -119,7 +119,7 @@ def count_timestamp(df, unix=True, col='timestamp'):
     else:
         df[col] = pd.to_datetime(df[col])
 
-	# Localize and remove time but keep date
+    # Localize and remove time but keep date
     df[col] = df[col].dt.tz_localize(None).dt.normalize()
 
     series = df[col].value_counts()
@@ -196,8 +196,8 @@ fp_df = get_all_series(args.path, cols)
 
 # Rename servers
 for key, value in servers.items():
-	if key in fp_df["guild_id"]:
-		fp_df["guild_id"][value] = fp_df["guild_id"].pop(key)
+    if key in fp_df["guild_id"]:
+        fp_df["guild_id"][value] = fp_df["guild_id"].pop(key)
 
 messages=[]
 acsv = pd.concat([load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
@@ -207,130 +207,130 @@ sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
 
 if args.start is not None:
-	sdate=args.start[0]
+    sdate=args.start[0]
 if args.end is not None:
-	edate=args.end[0]
+    edate=args.end[0]
 try:
-	acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
+    acsv=(acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
 
 except TypeError as error:
-	print("TypeError: Start/End date passed was not parsable")
-	exit()
+    print("TypeError: Start/End date passed was not parsable")
+    exit()
 
 if args.remove:
-	args.remove=args.remove.split('-')
-	args.remove=pd.date_range(args.remove[0], args.remove[-1], tz='UTC')
-	try:
-		acsv=acsv[[d not in args.remove for d in acsv['Timestamp'].dt.date]]
-	except ValueError as error:
-		print("ValueError: Remove date passed was not parsable")
-		exit()
+    args.remove=args.remove.split('-')
+    args.remove=pd.date_range(args.remove[0], args.remove[-1], tz='UTC')
+    try:
+        acsv=acsv[[d not in args.remove for d in acsv['Timestamp'].dt.date]]
+    except ValueError as error:
+        print("ValueError: Remove date passed was not parsable")
+        exit()
 
 def get_twords(acsv):
-	uwords = Counter()
+    uwords = Counter()
 
-	for channel in acsv.to_numpy():
-		for word in str(channel[1]).split():
-			cleanedword=regex.sub('', word).strip().lower()
-			if cleanedword:
-				uwords[cleanedword] += 1
+    for channel in acsv.to_numpy():
+        for word in str(channel[1]).split():
+            cleanedword=regex.sub('', word).strip().lower()
+            if cleanedword:
+                uwords[cleanedword] += 1
 
-	twords = list(uwords.items())
-	twords=sorted(twords, key=lambda x: x[1])
-	return twords
+    twords = list(uwords.items())
+    twords=sorted(twords, key=lambda x: x[1])
+    return twords
 
 twords = get_twords(acsv)
 
 if args.num is not None:
-	nmax=args.num[0]
+    nmax=args.num[0]
 else:
-	if args.cloud:
-		nmax=512
-	else:
-		nmax=20
+    if args.cloud:
+        nmax=512
+    else:
+        nmax=20
 if nmax>len(twords) or nmax==-1:
-	nmax=len(twords)
+    nmax=len(twords)
 
 if args.cloud:
-	from wordcloud import WordCloud
-	import matplotlib.pyplot as plt
-	print(str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
-		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'\n'))
-	wordcloud = WordCloud(width=1920,height=1080, max_words=nmax,relative_scaling=1,normalize_plurals=False).generate_from_frequencies(dict(twords))
-	plt.imshow(wordcloud, interpolation='bilinear')
-	plt.axis("off")
-	plt.show()
+    from wordcloud import WordCloud
+    import matplotlib.pyplot as plt
+    print(str(str(len(twords))+' words selected over '+str(len(servers))+' servers.<br>'+
+           'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date())+'\n'))
+    wordcloud = WordCloud(width=1920,height=1080, max_words=nmax,relative_scaling=1,normalize_plurals=False).generate_from_frequencies(dict(twords))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    plt.show()
 
 
 else:
-	fig = make_subplots(rows=4, cols=3, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day",
-														"Analytics", "City info", "IP info", "OS info",
-														"Release channel", "Guild ID", "Event Type", "Private"))
+    fig = make_subplots(rows=4, cols=3, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day",
+                                                        "Analytics", "City info", "IP info", "OS info",
+                                                        "Release channel", "Guild ID", "Event Type", "Private"))
 
-	x = [i[0] for i in twords[-nmax:]]
-	y = [i[1] for i in twords[-nmax:]]
-	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
+    x = [i[0] for i in twords[-nmax:]]
+    y = [i[1] for i in twords[-nmax:]]
+    fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
 
-	#tsdf = graphs.messages.perDate(acsv)
-	tsdf = count_timestamp(acsv.copy(), unix=False, col="Timestamp")
-	fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
+    #tsdf = graphs.messages.perDate(acsv)
+    tsdf = count_timestamp(acsv.copy(), unix=False, col="Timestamp")
+    fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
 
-  	ddf = graphs.messages.perDay(acsv)
-	
-	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=1)
+    ddf = graphs.messages.perDay(acsv)
 
-	hdf = graphs.messages.perHour(acsv)
-	fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=1, col=3)
+    fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=1)
 
-	for key, value in activity.items():
-		fig.add_trace(go.Scatter(x=list(value['timestamp']), y=list(value['Count']),
-								 name=f"{key.title()}/Day"), row=2, col=2)
+    hdf = graphs.messages.perHour(acsv)
+    fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=1, col=3)
 
-	def get_stacked_area(key, value, **kwargs):
-		return go.Scatter(
-			x=list(value['timestamp']), y=list(value['Count']),
-			mode='lines', stackgroup='one', groupnorm='percent',
-			name=key, **kwargs)
+    for key, value in activity.items():
+        fig.add_trace(go.Scatter(x=list(value['timestamp']), y=list(value['Count']),
+                                 name=f"{key.title()}/Day"), row=2, col=2)
 
-	for key, value in fp_df['city'].items():
-		fig.add_trace(get_stacked_area(key, value), row=2, col=3)
+    def get_stacked_area(key, value, **kwargs):
+        return go.Scatter(
+            x=list(value['timestamp']), y=list(value['Count']),
+            mode='lines', stackgroup='one', groupnorm='percent',
+            name=key, **kwargs)
 
-	for key, value in fp_df['ip'].items():
-		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=3, col=1)
+    for key, value in fp_df['city'].items():
+        fig.add_trace(get_stacked_area(key, value), row=2, col=3)
 
-	for key, value in fp_df['os'].items():
-		fig.add_trace(get_stacked_area(key, value), row=3, col=2)
+    for key, value in fp_df['ip'].items():
+        fig.add_trace(get_stacked_area(key, value, showlegend=False), row=3, col=1)
 
-	for key, value in fp_df['release_channel'].items():
-		fig.add_trace(get_stacked_area(key, value), row=3, col=3)
+    for key, value in fp_df['os'].items():
+        fig.add_trace(get_stacked_area(key, value), row=3, col=2)
 
-	for key, value in fp_df['guild_id'].items():
-		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=1)
+    for key, value in fp_df['release_channel'].items():
+        fig.add_trace(get_stacked_area(key, value), row=3, col=3)
 
-	for key, value in fp_df['event_type'].items():
-		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=2)
+    for key, value in fp_df['guild_id'].items():
+        fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=1)
 
-	for key, value in fp_df['private'].items():
-		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=3)
+    for key, value in fp_df['event_type'].items():
+        fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=2)
 
-  fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
+    for key, value in fp_df['private'].items():
+        fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=3)
 
-	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(tsdf['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
-		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
+    fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
-	fig.update_layout(
-	    title_text=tt
-	)
+    tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(tsdf['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
+           'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
 
-	layout = go.Layout(
-	    title=tt,
-	    xaxis=dict(
-	        title='Word'
-	    ),
-	    yaxis=dict(
-	        title='Count'
-	    ),
-	    hovermode='closest',
-	    #showlegend=True
-	)
-	fig.show()
+    fig.update_layout(
+        title_text=tt
+    )
+
+    layout = go.Layout(
+        title=tt,
+        xaxis=dict(
+            title='Word'
+        ),
+        yaxis=dict(
+            title='Count'
+        ),
+        hovermode='closest',
+        #showlegend=True
+    )
+    fig.show()
