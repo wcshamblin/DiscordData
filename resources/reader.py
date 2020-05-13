@@ -68,3 +68,27 @@ def load_cols(read_func, files, cols=[], **kwargs):
         dfs.append(next_df)
 
     return pd.concat(dfs, ignore_index=True)
+
+
+def load_servers(path):
+    """Merge servers/index.json with cache and return merged dict"""
+    with open(os.path.join(path, "servers", "index.json")) as f:
+        servers = json.load(f)
+
+    CACHE_PATH = "cache"
+    os.makedirs(CACHE_PATH, exist_ok=True)
+
+    CACHE_FILE = os.path.join(CACHE_PATH, "servers.json")
+
+    # Read cache if present
+    if os.path.isfile(CACHE_FILE):
+        with open(CACHE_FILE) as f:
+            cached_servers = json.load(f)
+    else:
+        cached_servers = {}
+
+    merged_servers = {**servers, **cached_servers}
+    with open(CACHE_FILE, 'w') as f:  # Update cache
+        json.dump(merged_servers, f)
+
+    return merged_servers

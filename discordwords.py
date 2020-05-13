@@ -32,19 +32,16 @@ try:
     assert os.path.isdir(args.path)
 except AssertionError as err:
     print("Path not a valid folder")
-messages_path = os.path.join(args.path, "messages")
 
+messages_path = os.path.join(args.path, "messages")
 channels = glob(os.path.join(messages_path, "*", "messages.csv"))
 if len(channels) < 1:
     print(args.path + " is not a readable discord data folder")
     exit()
 
-with open(os.path.join(args.path, "servers", "index.json")) as f:
-    servers = json.load(f)
-
-
-heatmap = resources.heatmap.Heatmap(args.path)
 activity = resources.analytics.count_activity(args.path)
+heatmap = resources.heatmap.Heatmap(args.path)
+servers = resources.reader.load_servers(args.path)
 fp_df = resources.analytics.get_fp(args.path, servers)
 
 messages = []
