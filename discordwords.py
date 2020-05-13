@@ -9,10 +9,10 @@ import argparse
 import json
 import os
 from plotly.subplots import make_subplots
-from time import tzname
 from pandas.api.types import CategoricalDtype
-from pytz.exceptions import UnknownTimeZoneError
 import warnings
+
+import graphs.messages
 
 ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
 ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
@@ -37,12 +37,17 @@ if len(channels)<1:
 	exit()
 
 with open(os.path.join(args.path, "servers", "index.json")) as f:
-    servers = json.load(f).values()
+    servers = json.load(f)
 
 def load_cache(read_func, path, **kwargs):
     abspath = os.path.abspath(path)
     CACHE_PATH = "cache"
     os.makedirs(CACHE_PATH, exist_ok=True)
+
+    key = json.dumps({
+        "path": abspath,
+        **kwargs
+    })
 
     # Associates each message path with cache file
     CACHE_INDEX = os.path.join(CACHE_PATH, "index.json")
@@ -52,7 +57,7 @@ def load_cache(read_func, path, **kwargs):
             index = json.load(f)
 
         try:
-            cache_file = index[abspath]
+            cache_file = index[key]
         except KeyError:  # File is not cached
             read_source = True
         else:  # Check if cache file exists
@@ -79,7 +84,7 @@ def load_cache(read_func, path, **kwargs):
         with open(CACHE_INDEX) as f:
             index = json.load(f)
 
-        index[abspath] = cache_file
+        index[key] = cache_file
 
         with open(CACHE_INDEX, 'w') as f:
             json.dump(index, f)
@@ -89,33 +94,89 @@ def load_cache(read_func, path, **kwargs):
 
     return df
 
-def count_timestamp(idf):
-    """Count number of events per day within dataframe"""
-    df = idf.copy()  # Don't modify the argument
 
-    PRUNE = set(df.columns) - {"timestamp",}
+def load_cols(read_func, files, cols=[], **kwargs):
+    dfs = []
+    for i in files:
+        next_df = load_cache(read_func, i, **kwargs)
+        drop_cols = set(next_df.columns) - {"timestamp", *cols}
+        next_df.drop(drop_cols, axis=1, inplace=True)
+        dfs.append(next_df)
+
+    return pd.concat(dfs, ignore_index=True)
+
+
+def count_timestamp(df, unix=True, col='timestamp'):
+    """Count number of events per day within dataframe. Mutates argument."""
+
+    PRUNE = set(df.columns) - {col,}
     df.drop(PRUNE, axis=1, inplace=True)
 
-    # Keep unix timestamps
-    df.timestamp = df.timestamp[df.timestamp.apply(isinstance, args=(int,))]
+    if unix:
+        # Keep unix timestamps
+        df[col] = df[col][df[col].apply(isinstance, args=(int,))]
+        df[col] = pd.to_datetime(df[col], unit='ms')
+    else:
+        df[col] = pd.to_datetime(df[col])
 
 	# Localize and remove time but keep date
+    df[col] = df[col].dt.tz_localize(None).dt.normalize()
+
+    series = df[col].value_counts()
+    # Set missing dates to 0
+    series = series.resample('D').sum().sort_index()
+    return pd.DataFrame({col: series.index, 'Count': series.values})
+
+def get_series(odf, col):
+    """Count number of events per day within dataframe. Does not mutate argument."""
+
+    PRUNE = set(odf.columns) - {"timestamp", col}
+    df = odf.drop(PRUNE, axis=1)
+
+    # Filter strings
+    df.timestamp = df.timestamp[df.timestamp.apply(isinstance, args=(int,))]
+    df.dropna(inplace=True)
+
+    # Localize and remove time but keep date
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms').dt.tz_localize(None)
     df['timestamp'] = df['timestamp'].dt.normalize()
 
-    series = df['timestamp'].value_counts()
-    # Set missing dates to 0
-    series = series.resample('D').sum().sort_index()
-    return pd.DataFrame({'timestamp': series.index, 'Count': series.values})
+    multidf = {}
+    for key in df[col].unique():
+        cdf = df[df[col] == key]  # Filter each column value
+        series = cdf['timestamp'].value_counts()
+        series = series.resample('D').sum().sort_index()
+        multidf[key] = pd.DataFrame({'timestamp': series.index, 'Count': series.values})
+
+    return multidf
 
 def get_analytics_count(path, atype):
     """Return dataframe representing number of events per day"""
     search = os.path.join(path, "activity", atype, "*json")
     files = [os.path.abspath(i) for i in glob(search)]
 
-    df = pd.concat([load_cache(pd.read_json, i, convert_dates=False, lines=True) for i in files],
-                   ignore_index=True)
+    df = load_cols(pd.read_json, files,
+                   convert_dates=False, lines=True)
+
     return count_timestamp(df)
+
+def get_all_series(path, cols):
+    """Return dataframe for cols per day"""
+    search = os.path.join(path, "activity", "*", "*json")
+    files = [os.path.abspath(i) for i in glob(search)]
+
+    dtypes = {col: "category" for col in cols}
+
+    # Load all files but drop all non-essential columns
+    df = load_cols(pd.read_json, files, cols,
+                   dtype=dtypes, convert_dates=False, lines=True)
+
+    fp_df = {}
+    for col in cols:
+        print(f"Produced {col} series.")
+        fp_df[col] = get_series(df, col)
+
+    return fp_df
 
 def get_activity_count(path):
     """Return dictionary of dataframes representing number of events per day"""
@@ -129,14 +190,21 @@ def get_activity_count(path):
 
 activity = get_activity_count(args.path)
 
+
+cols = ('city', 'event_type', 'guild_id', 'ip', 'os', 'private', 'release_channel')
+fp_df = get_all_series(args.path, cols)
+
+# Rename servers
+for key, value in servers.items():
+	if key in fp_df["guild_id"]:
+		fp_df["guild_id"][value] = fp_df["guild_id"].pop(key)
+
 messages=[]
 acsv = pd.concat([load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 
 sdate=min(acsv['Timestamp'])
 edate=max(acsv['Timestamp'])
-
-ltz=''.join(re.findall('([A-Z])', tzname[0]))
 
 if args.start is not None:
 	sdate=args.start[0]
@@ -195,58 +263,56 @@ if args.cloud:
 
 
 else:
-	fig = make_subplots(rows=3, cols=2, 
-			specs=[[{}, {}], [{}, {}], [{"colspan": 2}, None]],
-			subplot_titles=("Total words", "Timeseries", 
-				"Messages per hour", "Messages per day",
-				"Analytics per day"))
-
-	ddf = acsv.copy()
-	ddf['Timestamp'] = pd.to_datetime(ddf['Timestamp']).dt.normalize()                   #remove time, keep date
-	ddf['Timestamp'] = ddf['Timestamp'].dt.day_name()                                    #convert to day of week
-
-	series = ddf['Timestamp'].value_counts()
-	ddf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
-
-	dow=('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-	ddf = ddf.groupby(['Timestamp']).sum().reindex(dow).fillna(0.0)
-
-	hdf=acsv.copy()
-	hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.floor('h')                    #floor hours
-	try:
-		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.tz_convert(ltz).dt.hour   #localize timestamp
-	except UnknownTimeZoneError as error:
-		warnings.warn("Timezone could not be localized, using UTC...")
-		hdf['Timestamp'] = pd.to_datetime(hdf['Timestamp']).dt.hour
-	del hdf['Contents']                                                                  #remove contents of message
-
-	series = hdf['Timestamp'].value_counts()
-	hdf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
-
-	hod=range(0,24)
-	hdf = hdf.groupby(['Timestamp']).sum().reindex(hod).fillna(0.0)
-
-	acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp']).dt.normalize()                 #remove time, keep date
-	del acsv['Contents']                                                                 #remove contents of message
-
-	series = acsv['Timestamp'].value_counts()
-	# Set missing dates to 0
-	series = series.resample('D').sum().sort_index()
-	tsdf = pd.DataFrame({'Timestamp': series.index, 'Count': series.values})
-
+	fig = make_subplots(rows=4, cols=3, subplot_titles=("Total words", "Timeseries", "Messages per hour", "Messages per day",
+														"Analytics", "City info", "IP info", "OS info",
+														"Release channel", "Guild ID", "Event Type", "Private"))
 
 	x = [i[0] for i in twords[-nmax:]]
 	y = [i[1] for i in twords[-nmax:]]
 	fig.add_trace(go.Bar(x=x,y=y, name="Unique words used"), row=1, col=1)
-	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=2)
-	fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=2, col=1)
+
+	#tsdf = graphs.messages.perDate(acsv)
+	tsdf = count_timestamp(acsv.copy(), unix=False, col="Timestamp")
 	fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(tsdf['Count']),name="Messages/Date"), row=1, col=2)
+
+  ddf = graphs.messages.perDay(acsv)
+	fig.add_trace(go.Bar(x=ddf.index.values.tolist(),y=ddf['Count'], name="Messages/Day"), row=2, col=1)
+
+	hdf = graphs.messages.perHour(acsv)
+	fig.add_trace(go.Bar(x=hdf.index.values.tolist(),y=hdf['Count'], name="Messages/Hour"), row=1, col=3)
 
 	for key, value in activity.items():
 		fig.add_trace(go.Scatter(x=list(value['timestamp']), y=list(value['Count']),
-								 name=f"{key.title()}/Day"), row=2, col=1)
+								 name=f"{key.title()}/Day"), row=2, col=2)
 
-	fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
+	def get_stacked_area(key, value, **kwargs):
+		return go.Scatter(
+			x=list(value['timestamp']), y=list(value['Count']),
+			mode='lines', stackgroup='one', groupnorm='percent',
+			name=key, **kwargs)
+
+	for key, value in fp_df['city'].items():
+		fig.add_trace(get_stacked_area(key, value), row=2, col=3)
+
+	for key, value in fp_df['ip'].items():
+		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=3, col=1)
+
+	for key, value in fp_df['os'].items():
+		fig.add_trace(get_stacked_area(key, value), row=3, col=2)
+
+	for key, value in fp_df['release_channel'].items():
+		fig.add_trace(get_stacked_area(key, value), row=3, col=3)
+
+	for key, value in fp_df['guild_id'].items():
+		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=1)
+
+	for key, value in fp_df['event_type'].items():
+		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=2)
+
+	for key, value in fp_df['private'].items():
+		fig.add_trace(get_stacked_area(key, value, showlegend=False), row=4, col=3)
+
+  fig.update_layout(xaxis3=dict(tickmode="array", tickvals=list(range(24)), ticktext=[str(i) + ':00' for i in range(24)]))
 
 	tt=str(str(sum([i[1] for i in twords]))+' words / '+str(int(tsdf['Count'].sum()))+' messages selected over '+str(len(servers))+' servers.<br>'+
 		   'Date range: '+str(pd.Timestamp(sdate).date())+' - '+str(pd.Timestamp(edate).date()))
