@@ -13,6 +13,7 @@ from pandas.api.types import CategoricalDtype
 
 import resources.df_tools
 import resources.heatmap
+import resources.geoip
 import resources.messages
 import resources.reader
 import resources.tz
@@ -43,6 +44,7 @@ activity = resources.analytics.count_activity(args.path)
 heatmap = resources.heatmap.Heatmap(args.path)
 servers = resources.reader.load_servers(args.path)
 fp_df = resources.analytics.get_fp(args.path, servers)
+resources.geoip.load_geo(set(fp_df['ip']))  # Load cache
 
 messages = []
 acsv = pd.concat([resources.reader.load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
