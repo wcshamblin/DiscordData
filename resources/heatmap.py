@@ -9,7 +9,11 @@ class Heatmap:
     ONE_SEC = pd.to_timedelta(1, unit='s')
 
     def __init__(self, path):
-        analytics = resources.analytics.load_directory(path, "analytics")
+        try:
+            analytics = resources.analytics.load_directory(path, "analytics")
+        except AssertionError:
+            analytics = resources.analytics.load_directory(path, "reporting")
+
         self.df = resources.df_tools.count_timestamp(analytics, interval='H')
         self.df.set_index('timestamp', inplace=True)
 
