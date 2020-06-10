@@ -1,3 +1,4 @@
+# pip3 install maxminddb-geolite2
 import json
 import os
 
@@ -23,7 +24,7 @@ def load_geo(ips):
         cached_ips = {}
 
     new_ips = set(ips) - set(cached_ips)
-    new_geoip = poll_geo(new_ips)
+    new_geoip = _poll_geo(new_ips)
 
     merged_geoip = {**cached_ips, **new_geoip}
     with open(CACHE_FILE, 'w', encoding="utf-8") as f:  # Update cache
@@ -32,7 +33,11 @@ def load_geo(ips):
     return merged_geoip
 
 
-def poll_geo(ips):
+def ip_to_city(geoip):
+    return {i: a[i]['city']['names']['en'] for i in a if a[i] is not None and 'city' in a[i]}
+
+
+def _poll_geo(ips):
     if geo is None:
         return {}
 
