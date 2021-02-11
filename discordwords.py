@@ -122,8 +122,7 @@ else:
     y = [i[1] for i in twords[-nmax:]]
     fig.add_trace(go.Bar(x=x, y=y, name="Unique words used"), row=1, col=1)
 
-    tsdf = resources.df_tools.count_timestamp(acsv.copy(), localized=True,
-                                              unix=False, col="Timestamp")
+    tsdf = resources.df_tools.count_timestamp(acsv.copy(), col="Timestamp")
     fig.add_trace(go.Scatter(x=list(tsdf['Timestamp']), y=list(
         tsdf['Count']), name="Messages/Date"), row=1, col=2)
 

@@ -42,12 +42,12 @@ def get_series(odf, col, interval='W'):
     df = odf.drop(PRUNE, axis=1)
 
     # Filter strings
-    df.timestamp = df.timestamp[df.timestamp.apply(isinstance, args=(int,))]
+    df.timestamp = df.timestamp.apply(resources.df_tools.parse_timestamp)
     df.dropna(inplace=True)
 
     # Localize and remove time but keep date
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-    df['timestamp'] = resources.tz.tz_convert(df['timestamp'])
+    df['timestamp'] = resources.tz.localize_utc(df['timestamp'])
     df['timestamp'] = df['timestamp'].dt.normalize()
 
     multidf = {}
@@ -81,6 +81,12 @@ def get_all_series(path, cols):
     fp_df = {}
     while results:
         fp_df.update(results.pop())
+
+    if 'private' in fp_df:
+        fp_df['private']['Private'] = fp_df['private'][True]
+        fp_df['private']['Public'] = fp_df['private'][False]
+        del fp_df['private'][True]
+        del fp_df['private'][False]
 
     return fp_df
 

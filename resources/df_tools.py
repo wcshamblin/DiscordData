@@ -1,4 +1,5 @@
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import resources.tz
 
 
@@ -11,20 +12,26 @@ def count_df(df, interval='D', col='timestamp'):
     return pd.DataFrame({col: series.index, 'Count': count})
 
 
-def count_timestamp(df, localized=False, unix=True, interval='D', col='timestamp'):
+def count_timestamp(df, interval='D', col='timestamp'):
     """Count number of events per day within dataframe. Mutates argument."""
 
     PRUNE = set(df.columns) - {col, }
     df.drop(PRUNE, axis=1, inplace=True)
 
-    if unix:
-        # Keep unix timestamps
-        df[col] = df[col][df[col].apply(isinstance, args=(int,))]
-        df[col] = pd.to_datetime(df[col], unit='ms')
-    else:
-        df[col] = pd.to_datetime(df[col])
+    df[col] = df[col].apply(parse_timestamp)
 
     if interval == 'D':  # Remove time but keep date
         df[col] = df[col].dt.normalize()
 
     return count_df(df, col=col, interval=interval)
+
+def parse_timestamp(i):
+    if isinstance(i, int):
+        return pd.to_datetime(i)
+    elif isinstance(i, str):
+        return pd.to_datetime(i.replace('"', ''))
+    elif isinstance(i, pd.Timestamp) or isinstance(i, pd.core.indexes.datetimes.DatetimeIndex):
+        return i
+    else:
+        print('Could not parse', type(i), i)
+        return i
