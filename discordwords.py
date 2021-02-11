@@ -36,6 +36,7 @@ except AssertionError as err:
 
 messages_path = os.path.join(args.path, "messages")
 channels = glob(os.path.join(messages_path, "*", "messages.csv"))
+
 if len(channels) < 1:
     print(args.path + " is not a readable discord data folder")
     exit()
@@ -48,6 +49,7 @@ resources.geoip.load_geo(set(fp_df['ip']))  # Load cache
 
 messages = []
 acsv = pd.concat([resources.reader.load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
+
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 acsv['Timestamp'] = resources.tz.localize_utc(acsv['Timestamp'])
 
@@ -88,10 +90,10 @@ def get_twords(acsv):
     twords = sorted(twords, key=lambda x: x[1])
     return twords
 
-
 twords = get_twords(acsv)
 
 if args.num is not None:
+
     nmax = args.num[0]
 else:
     if args.cloud:
