@@ -1,5 +1,4 @@
 import pandas as pd
-from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import resources.tz
 
 
@@ -19,6 +18,7 @@ def count_timestamp(df, interval='D', col='timestamp'):
     df.drop(PRUNE, axis=1, inplace=True)
 
     df[col] = df[col].apply(parse_timestamp)
+    df[col] = resources.tz.localize_utc(df[col])
 
     if interval == 'D':  # Remove time but keep date
         df[col] = df[col].dt.normalize()
