@@ -18,14 +18,22 @@ import resources.messages
 import resources.reader
 import resources.tz
 
-ps = argparse.ArgumentParser(description='Parses and presents data from Discord\'s data dump')
-ps.add_argument("path", type=str, help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
-ps.add_argument("-c", "--cloud", action="store_true", help="Present data as word cloud")
-ps.add_argument("-d", "--dash", action="store_true", help="Present data with dashboard (default)")
-ps.add_argument("-r", "--remove", type=str, help="Remove list of date(s) from data (year/month/day) or (year/month/day-year/month/day)")
-ps.add_argument("-n", "--num", type=int, nargs="+", help="Number of words to display. Bar chart defaults to 20, WordCloud defaults to 512")
-ps.add_argument("-s", "--start", type=str, nargs="+", help="Starting date (year/month/day) Defaults to beginning of data")
-ps.add_argument("-e", "--end", type=str, nargs="+", help="Stop date (year/month/day) Defaults to end of data")
+ps = argparse.ArgumentParser(
+    description='Parses and presents data from Discord\'s data dump')
+ps.add_argument("path", type=str,
+                help='Path to folder in which Discord\'s data is held. Will contain a /messages/ folder')
+ps.add_argument("-c", "--cloud", action="store_true",
+                help="Present data as word cloud")
+ps.add_argument("-d", "--dash", action="store_true",
+                help="Present data with dashboard (default)")
+ps.add_argument("-r", "--remove", type=str,
+                help="Remove list of date(s) from data (year/month/day) or (year/month/day-year/month/day)")
+ps.add_argument("-n", "--num", type=int, nargs="+",
+                help="Number of words to display. Bar chart defaults to 20, WordCloud defaults to 512")
+ps.add_argument("-s", "--start", type=str, nargs="+",
+                help="Starting date (year/month/day) Defaults to beginning of data")
+ps.add_argument("-e", "--end", type=str, nargs="+",
+                help="Stop date (year/month/day) Defaults to end of data")
 
 args = ps.parse_args()
 regex = re.compile('[^a-zA-Z]')
@@ -48,7 +56,8 @@ fp_df = resources.analytics.get_fp(args.path, servers)
 resources.geoip.load_geo(set(fp_df['ip']))  # Load cache
 
 messages = []
-acsv = pd.concat([resources.reader.load_cache(pd.read_csv, i, usecols=[1, 2]) for i in channels])
+acsv = pd.concat([resources.reader.load_cache(
+    pd.read_csv, i, usecols=[1, 2]) for i in channels])
 
 acsv['Timestamp'] = pd.to_datetime(acsv['Timestamp'])
 acsv['Timestamp'] = resources.tz.localize_utc(acsv['Timestamp'])
@@ -61,7 +70,8 @@ if args.start is not None:
 if args.end is not None:
     edate = args.end[0]
 try:
-    acsv = (acsv.loc[(acsv['Timestamp'] > sdate) & (acsv['Timestamp'] <= edate)])
+    acsv = (acsv.loc[(acsv['Timestamp'] > sdate)
+                     & (acsv['Timestamp'] <= edate)])
 
 except TypeError as error:
     print("TypeError: Start/End date passed was not parsable")
@@ -89,6 +99,7 @@ def get_twords(acsv):
     twords = list(uwords.items())
     twords = sorted(twords, key=lambda x: x[1])
     return twords
+
 
 twords = get_twords(acsv)
 
