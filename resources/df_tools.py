@@ -25,6 +25,7 @@ def count_timestamp(df, interval='D', col='timestamp'):
 
     return count_df(df, col=col, interval=interval)
 
+
 def parse_timestamp(i):
     if isinstance(i, int):
         return pd.to_datetime(i, unit='ms', utc=True)

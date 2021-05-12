@@ -92,7 +92,8 @@ def get_all_series(path, cols):
 
 
 def get_fp(path, servers):
-    COLS = ('city', 'event_type', 'guild_id', 'ip', 'os', 'private', 'release_channel')
+    COLS = ('city', 'event_type', 'guild_id', 'ip',
+            'os', 'private', 'release_channel')
     fp_df = get_all_series(path, COLS)
 
     # Rename servers
